@@ -201,8 +201,6 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
       <div class="meta" id="reelsMeta"></div>
       <div class="today" style="margin-top:14px">
         <button class="btn primary" id="plusOne">+1 рилс</button>
-        <button class="btn ghost" id="minusOne" title="Убрать один за сегодня">−1</button>
-        <span>сегодня: <b id="todayCount">0</b></span>
       </div>
     </div>
     <div class="card hero" id="moneyCard">
@@ -594,7 +592,6 @@ function render(){
   $('#reelsBig').innerHTML=`${fmt(st.total)} <small>/ ${fmt(S.goal)}</small>`;
   $('#reelsBar').style.width=pct+'%';
   $('#planMark').style.left=`calc(${Math.min(100,st.planNow/S.goal*100)}% - 1px)`;
-  $('#todayCount').textContent=state.reels[iso(st.t)]||0;
   $('#reelsMeta').innerHTML=`<span>${fmt1(pct)}%</span><span>по плану на сегодня: ${fmt(st.planNow)}</span><span class="${ahead>=0?'pos':'neg'}">${ahead>=0?'опережаешь на '+fmt(ahead):'отстаёшь на '+fmt(-ahead)}</span>`;
 
   // hero money
@@ -692,7 +689,6 @@ function commit(){if(state.demo){/* first real edit on demo keeps demo flag unti
 /* ---------- events ---------- */
 function setReels(date,n){n=Math.max(0,Math.round(n));if(n)state.reels[date]=n;else delete state.reels[date];commit()}
 $('#plusOne').onclick=()=>{const k=iso(today());setReels(k,(state.reels[k]||0)+1);const f=$('#fReels');if(f.date.value===k)f.count.value=state.reels[k]||0};
-$('#minusOne').onclick=()=>{const k=iso(today());setReels(k,(state.reels[k]||0)-1);const f=$('#fReels');if(f.date.value===k)f.count.value=state.reels[k]||0};
 $('#fReels').onsubmit=e=>{e.preventDefault();const f=e.target;setReels(f.date.value,+f.count.value)};
 $('#fReels').date.onchange=e=>{$('#fReels').count.value=state.reels[e.target.value]||0};
 $('#fFol').onsubmit=e=>{e.preventDefault();const f=e.target,row={date:f.date.value};PLAT.forEach(([k])=>row[k]=f[k].value===''?0:+f[k].value);state.followers=state.followers.filter(x=>x.date!==row.date).concat(row);commit()};
@@ -710,8 +706,8 @@ $('#importInp').onchange=async e=>{const file=e.target.files[0];if(!file)return;
 
 /* фото в карточках: файлы лежат рядом с index.html */
 function photo(id,list,v){if(!list.length)return;const img=new Image();img.onload=()=>{const c=$(id);c.classList.add('photo');c.style.setProperty('--img',`url(${list[0]})`);for(const k in v)c.style.setProperty(k,v[k])};img.onerror=()=>photo(id,list.slice(1),v);img.src=list[0]}
-photo('#moneyCard',['car.jpg','car.webp','car.png'],{'--pos':'40% 74%','--size':'auto 200%','--mpos':'50% 76%','--msize':'auto 190%'});
-photo('#reelsCard',['reels.jpg','reels.webp','reels.png'],{'--pos':'13% 20%','--size':'160% auto','--mpos':'50% 22%','--msize':'cover'});
+photo('#moneyCard',['car.jpg','car.webp','car.png'],{'--pos':'42% 84%','--size':'auto 150%','--mpos':'50% 76%','--msize':'auto 190%'});
+photo('#reelsCard',['reels.jpg','reels.webp','reels.png'],{'--pos':'30% 20%','--size':'150% auto','--mpos':'50% 22%','--msize':'cover'});
 
 /* цитата дня: у каждого дня своя, порядок перемешан один раз */
 (function(){
