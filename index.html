@@ -76,20 +76,31 @@ h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
 .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-3);border-radius:2px}
 .meta{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 14px}
 .pos{color:var(--good)} .neg{color:var(--bad)}
-.hero.car{position:relative;overflow:hidden;border:0;color:#fff;background:#0b0e13}
-.hero.car::before{content:"";position:absolute;top:0;right:0;bottom:0;width:72%;background:var(--car) 40% 74%/auto 200% no-repeat}
-.hero.car::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0b0e13 30%,rgba(11,14,19,.75) 46%,rgba(11,14,19,.1) 72%,rgba(11,14,19,0) 100%)}
+.hero.photo{position:relative;overflow:hidden;border:0;color:#fff;background:#0b0e13}
+.hero.photo::before{content:"";position:absolute;top:0;right:0;bottom:0;width:72%;background:var(--img) var(--pos)/var(--size) no-repeat}
+.hero.photo::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0b0e13 30%,rgba(11,14,19,.75) 46%,rgba(11,14,19,.1) 72%,rgba(11,14,19,0) 100%)}
 @media (max-width:760px){
-  .hero.car{padding-top:170px}
-  .hero.car::before{width:100%;bottom:auto;height:200px;background-position:50% 76%;background-size:auto 190%}
-  .hero.car::after{background:linear-gradient(180deg,rgba(11,14,19,0) 0,rgba(11,14,19,0) 110px,#0b0e13 200px)}
+  .hero.photo{padding-top:170px}
+  .hero.photo::before{width:100%;bottom:auto;height:200px;background-position:var(--mpos);background-size:var(--msize)}
+  .hero.photo::after{background:linear-gradient(180deg,rgba(11,14,19,0) 0,rgba(11,14,19,0) 110px,#0b0e13 200px)}
 }
-.hero.car>*{position:relative;z-index:1}
-.hero.car .label,.hero.car .big small{color:rgba(255,255,255,.7)}
-.hero.car .meta{color:rgba(255,255,255,.85)}
-.hero.car .bar{background:rgba(255,255,255,.2)}
-.hero.car .bar i{background:#fff}
-@media (min-width:761px){.hero.car .bar,.hero.car .meta{max-width:58%}}
+.hero.photo>*{position:relative;z-index:1}
+.hero.photo .label,.hero.photo .big small{color:rgba(255,255,255,.7)}
+.hero.photo .meta,.hero.photo .today{color:rgba(255,255,255,.85)}
+.hero.photo .btn.primary{background:#fff;color:#0b0b0b;border-color:#fff}
+.hero.photo .btn.ghost{color:rgba(255,255,255,.7)}
+.hero.photo .bar b{background:rgba(255,255,255,.7)}
+.hero.photo .bar{background:rgba(255,255,255,.2)}
+.hero.photo .bar i{background:#fff}
+@media (min-width:761px){.hero.photo .bar,.hero.photo .meta{max-width:58%}}
+.quote{margin-top:16px;padding:28px 28px 24px}
+.quote .q-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.quote .q-top .label{font-size:13px;color:var(--ink-3);font-weight:600}
+.quote blockquote{margin:10px 0 14px;font-size:26px;line-height:1.3;font-weight:700;letter-spacing:-.015em;text-wrap:balance}
+.quote blockquote::before{content:"«"}.quote blockquote::after{content:"»"}
+.quote .q-a{font-size:14px;color:var(--ink-2);font-weight:600}
+.quote .q-a span{color:var(--ink-3);font-weight:500}
+@media (max-width:600px){.quote{padding:22px}.quote blockquote{font-size:21px}}
 .hero-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .today{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:8px}
 .chart{width:100%;min-height:120px;position:relative}
@@ -183,18 +194,15 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
 
   <!-- HERO -->
   <div class="grid2">
-    <div class="card hero">
-      <div class="hero-row">
-        <div class="label">Рилсов выложено</div>
-        <div class="today">сегодня: <b id="todayCount">0</b>
-          <button class="btn ghost" id="minusOne" title="Убрать один за сегодня">−1</button>
-        </div>
-      </div>
+    <div class="card hero" id="reelsCard">
+      <div class="label">Рилсов выложено</div>
       <div class="big" id="reelsBig">0 <small>/ 1500</small></div>
       <div class="bar" title="Метка — где ты должен быть по плану"><i id="reelsBar"></i><b id="planMark"></b></div>
-      <div class="hero-row">
-        <div class="meta" id="reelsMeta"></div>
+      <div class="meta" id="reelsMeta"></div>
+      <div class="today" style="margin-top:14px">
         <button class="btn primary" id="plusOne">+1 рилс</button>
+        <button class="btn ghost" id="minusOne" title="Убрать один за сегодня">−1</button>
+        <span>сегодня: <b id="todayCount">0</b></span>
       </div>
     </div>
     <div class="card hero" id="moneyCard">
@@ -206,6 +214,12 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
   </div>
 
   <div class="kpis" id="kpis"></div>
+
+  <div class="card quote" id="quoteCard" hidden>
+    <div class="q-top"><span class="label" id="qLabel">Цитата дня</span><button class="btn ghost" id="qNext" title="Другая цитата">Ещё ↻</button></div>
+    <blockquote id="qText"></blockquote>
+    <div class="q-a" id="qAuthor"></div>
+  </div>
 
   <!-- PLAN -->
   <h2>Темп и план</h2>
@@ -325,6 +339,7 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
 </div>
 <div id="tip"></div>
 
+<script src="quotes.js"></script>
 <script>
 /* ---------- helpers ---------- */
 const KEY='reels1500:v1', THEME_KEY='reels1500:theme', MS=864e5;
@@ -693,8 +708,22 @@ $('#resetBtn').onclick=()=>{if(!confirm('Стереть все данные в �
 $('#exportBtn').onclick=()=>{const b=new Blob([JSON.stringify({...state,demo:false},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='data.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $('#importInp').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!d.settings||!d.reels)throw 0;state={demo:false,followers:[],income:[],...d};['#fReels','#fFol','#fInc'].forEach(s=>$(s).reset());commit()}catch(err){alert('Не получилось прочитать файл')}e.target.value=''};
 
-/* фото машины: положи car.jpg (или .webp/.png) рядом с index.html */
-(function carPhoto(list){if(!list.length)return;const img=new Image();img.onload=()=>{const c=$('#moneyCard');c.classList.add('car');c.style.setProperty('--car',`url(${list[0]})`)};img.onerror=()=>carPhoto(list.slice(1));img.src=list[0]})(['car.jpg','car.webp','car.png','car.jpeg']);
+/* фото в карточках: файлы лежат рядом с index.html */
+function photo(id,list,v){if(!list.length)return;const img=new Image();img.onload=()=>{const c=$(id);c.classList.add('photo');c.style.setProperty('--img',`url(${list[0]})`);for(const k in v)c.style.setProperty(k,v[k])};img.onerror=()=>photo(id,list.slice(1),v);img.src=list[0]}
+photo('#moneyCard',['car.jpg','car.webp','car.png'],{'--pos':'40% 74%','--size':'auto 200%','--mpos':'50% 76%','--msize':'auto 190%'});
+photo('#reelsCard',['reels.jpg','reels.webp','reels.png'],{'--pos':'13% 20%','--size':'160% auto','--mpos':'50% 22%','--msize':'cover'});
+
+/* цитата дня: у каждого дня своя, порядок перемешан один раз */
+(function(){
+  if(typeof QUOTES==='undefined'||!QUOTES.length)return;
+  let seed=1500;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
+  const order=QUOTES.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  const dayN=Math.floor(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())/MS);
+  let cur=order[dayN%order.length];
+  const show=(i,daily)=>{const [t,a,src]=QUOTES[i];$('#qText').textContent=t;$('#qAuthor').innerHTML=esc(a)+(src?` <span>· ${esc(src)}</span>`:'');$('#qLabel').textContent=daily?'Цитата дня':'Цитата'};
+  show(cur,true);$('#quoteCard').hidden=false;
+  $('#qNext').onclick=()=>{let n;do n=Math.floor(Math.random()*QUOTES.length);while(n===cur&&QUOTES.length>1);cur=n;show(cur,false)};
+})();
 
 /* theme */
 const THEMES=['auto','light','dark'],ICON={auto:'◐',light:'☀',dark:'☾'};
