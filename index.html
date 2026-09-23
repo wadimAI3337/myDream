@@ -76,7 +76,8 @@ h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
 .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-3);border-radius:2px}
 .meta{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 14px}
 .pos{color:var(--good)} .neg{color:var(--bad)}
-.hero.car{position:relative;overflow:hidden;border:0;color:#fff;min-height:230px;background:#0d1117 center 62%/cover no-repeat}
+.hero.car{position:relative;overflow:hidden;border:0;color:#fff;min-height:230px;background:#0d1117 28% 84%/180% auto no-repeat}
+@media (max-width:760px){.hero.car{background-size:cover;background-position:52% 72%;min-height:260px}}
 .hero.car::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,10,14,.9) 0%,rgba(8,10,14,.6) 50%,rgba(8,10,14,.1) 100%)}
 .hero.car>*{position:relative}
 .hero.car .label,.hero.car .big small{color:rgba(255,255,255,.7)}
