@@ -146,6 +146,39 @@ h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
 .plat .name{display:flex;align-items:center;gap:8px}
 .plat .d2{font-size:12px;color:var(--ink-3)}
 #tip .dot{margin-right:6px;vertical-align:-1px}
+.legions{margin-top:16px;padding:0}
+.legions summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px}
+.legions summary::-webkit-details-marker{display:none}
+.legions summary h3{margin:0;font-size:15px;font-weight:700}
+.legions summary .note{font-size:12px;color:var(--ink-3);margin-top:2px}
+.legions .chev{color:var(--ink-3);transition:transform .25s;font-size:13px}
+.legions[open] .chev{transform:rotate(180deg)}
+.leg-mini{display:flex;gap:3px;margin-left:auto}
+.leg-mini i{width:14px;height:6px;border-radius:2px;background:var(--h0);position:relative;overflow:hidden}
+.leg-mini i b{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.legions[open] .leg-mini{display:none}
+.leg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:24px 20px;padding:6px 22px 8px}
+@media (max-width:900px){.leg-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.leg-grid{grid-template-columns:repeat(2,1fr);gap:20px 14px;padding:4px 16px 8px}.leg-mini{display:none}}
+.leg-h{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--ink-3);margin-bottom:7px;font-variant-numeric:tabular-nums}
+.leg-h b{font-size:13px;font-weight:800;color:var(--ink-2);letter-spacing:.04em}
+.leg.done .leg-h b{color:var(--accent)}
+.leg.now .leg-h b{color:var(--ink)}
+.leg-cells{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+.leg-cells i{aspect-ratio:1;border-radius:3px;background:var(--h0);position:relative;display:block}
+.leg-cells i.f{background:var(--accent)}
+.leg-cells i.m:not(.f){box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+.leg-cells i.m.f::after{content:"";position:absolute;inset:30%;border-radius:50%;background:var(--surface)}
+.leg-cells i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--accent);z-index:1;animation:legPulse 2.2s ease-in-out infinite}
+.leg-cells i.nx{background:transparent;outline:1.5px dashed var(--accent);outline-offset:-1.5px}
+.leg-grid.anim i.f{animation:legPop .4s cubic-bezier(.2,.9,.3,1.4) both;animation-delay:var(--d)}
+.leg-grid.anim i.cur{animation:legPop .4s cubic-bezier(.2,.9,.3,1.4) both,legPulse 2.2s ease-in-out infinite;animation-delay:var(--d),calc(var(--d) + .4s)}
+@keyframes legPop{from{opacity:0;transform:scale(.3)}}
+@keyframes legPulse{50%{box-shadow:0 0 0 2px var(--surface),0 0 0 6px color-mix(in srgb,var(--accent) 25%,transparent)}}
+@media (prefers-reduced-motion:reduce){.leg-cells i{animation:none!important}}
+.leg-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11px;color:var(--ink-3);padding:10px 22px 20px}
+.leg-legend span{display:inline-flex;align-items:center;gap:6px}
+.leg-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;position:relative;background:var(--h0)}
 .plats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:16px}
 @media (max-width:760px){.plats{grid-template-columns:repeat(2,1fr)}}
 .src{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;font-size:13px;margin:10px 0}
@@ -239,6 +272,21 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
 
   <h2>Этапы</h2>
   <div class="miles" id="miles"></div>
+  <details class="card legions" id="legions">
+    <summary>
+      <div><h3>Все 1500 рилсов</h3><div class="note" id="legNote"></div></div>
+      <div class="leg-mini" id="legMini"></div>
+      <span class="chev">▾</span>
+    </summary>
+    <div class="leg-grid" id="legGrid"></div>
+    <div class="leg-legend">
+      <span><i style="background:var(--accent)"></i>выложен</span>
+      <span><i style="box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--accent);background:var(--accent)"></i>последний</span>
+      <span><i style="background:transparent;outline:1.5px dashed var(--accent);outline-offset:-1.5px"></i>следующий</span>
+      <span><i style="box-shadow:inset 0 0 0 1.5px var(--ink-3)"></i>этап</span>
+      <span>1 легион = 100 рилсов</span>
+    </div>
+  </details>
 
   <!-- FOLLOWERS -->
   <h2>Подписчики</h2>
@@ -579,6 +627,37 @@ function heatmap(st){
   const sc=$('#heatScroll');sc.scrollLeft=sc.scrollWidth;
 }
 
+/* ---------- 1500 клеток: легионы по 100 ---------- */
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+let legAnimated=false,legDates=[];
+function legions(st,ms){
+  const goal=st.S.goal,total=Math.min(st.total,goal),n=Math.ceil(goal/100);
+  legDates=[];Object.keys(state.reels).sort().forEach(k=>{for(let j=0;j<state.reels[k];j++)legDates.push(k)});
+  const curLeg=Math.min(n-1,Math.floor(total/100));
+  $('#legNote').textContent=total>=goal?'Все легионы собраны. Император.':`${fmt(total)} из ${fmt(goal)} · легион ${ROMAN[curLeg]||curLeg+1}, до его конца ${fmt(Math.min(goal,(curLeg+1)*100)-total)}`;
+  $('#legMini').innerHTML=Array.from({length:n},(_,b)=>{const size=Math.min(100,goal-b*100),p=Math.max(0,Math.min(1,(total-b*100)/size));return`<i><b style="width:${p*100}%"></b></i>`}).join('');
+  if(!$('#legions').open)return;
+  const msSet=new Set(ms),animate=!legAnimated;legAnimated=true;
+  let h='';
+  for(let b=0;b<n;b++){
+    const from=b*100+1,to=Math.min(goal,(b+1)*100),inB=Math.max(0,Math.min(to,total)-b*100),size=to-from+1;
+    h+=`<div class="leg${inB===size?' done':''}${b===curLeg&&total<goal?' now':''}"><div class="leg-h"><b>${ROMAN[b]||b+1}</b><span>${inB===size?'✓ собран':inB+' / '+size}</span></div><div class="leg-cells">`;
+    for(let i=from;i<=to;i++){
+      const f=i<=total,c=(f?'f':'')+(i===total?' cur':'')+(i===total+1?' nx':'')+(msSet.has(i)?' m':'');
+      h+=`<i data-n="${i}" class="${c.trim()}"${f&&animate?` style="--d:${Math.min(i*1.5,900)}ms"`:''}></i>`;
+    }
+    h+='</div></div>';
+  }
+  const g=$('#legGrid');g.classList.toggle('anim',animate);g.innerHTML=h;
+}
+$('#legions').addEventListener('toggle',()=>{if($('#legions').open)render()});
+$('#legGrid').addEventListener('pointermove',e=>{
+  const el=e.target.closest('i[data-n]');if(!el){hideTip();return}
+  const n=+el.dataset.n,d=legDates[n-1],left=n-stats().total;
+  showTip(`<b>Рилс №${fmt(n)}</b>${el.classList.contains('m')?' · этап':''}<div style="opacity:.7">${d?dLong(parse(d)):left===1?'следующий — давай!':'ещё '+fmt(left)}</div>`,e.clientX,e.clientY);
+});
+$('#legGrid').addEventListener('pointerleave',hideTip);
+
 /* ---------- render ---------- */
 function render(){
   const st=stats(),S=st.S;
@@ -634,6 +713,8 @@ function render(){
   const next=ms.find(v=>!reached[v]);
   $('#miles').style.gridTemplateColumns=`repeat(${innerWidth<=760?3:ms.length},1fr)`;
   $('#miles').innerHTML=ms.map(v=>reached[v]?`<div class="mile done"><div class="num">${fmt(v)}</div><div class="d">${dShort(parse(reached[v]))}</div></div>`:`<div class="mile todo${v===next?' next':''}"><div class="num">${fmt(v)}</div><div class="d">ещё ${fmt(v-st.total)}</div></div>`).join('');
+
+  legions(st,ms);
 
   // followers
   const G=gains(st.fol),byD={};G.forEach(r=>byD[r.date]=r);
