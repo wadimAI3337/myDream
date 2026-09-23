@@ -76,6 +76,13 @@ h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
 .bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink-3);border-radius:2px}
 .meta{font-size:13px;color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 14px}
 .pos{color:var(--good)} .neg{color:var(--bad)}
+.hero.car{position:relative;overflow:hidden;border:0;color:#fff;min-height:230px;background:#0d1117 center 62%/cover no-repeat}
+.hero.car::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,10,14,.9) 0%,rgba(8,10,14,.6) 50%,rgba(8,10,14,.1) 100%)}
+.hero.car>*{position:relative}
+.hero.car .label,.hero.car .big small{color:rgba(255,255,255,.7)}
+.hero.car .meta{color:rgba(255,255,255,.85)}
+.hero.car .bar{background:rgba(255,255,255,.2)}
+.hero.car .bar i{background:#fff}
 .hero-row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .today{font-size:13px;color:var(--ink-3);display:flex;align-items:center;gap:8px}
 .chart{width:100%;min-height:120px;position:relative}
@@ -166,10 +173,6 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
     <button class="btn icon-btn" id="themeBtn" title="Тема" aria-label="Переключить тему"></button>
   </header>
 
-  <div class="banner" id="demoBanner" hidden>
-    <span>Сейчас показаны демо-данные, чтобы было видно, как всё выглядит.</span>
-    <button class="btn primary" id="startFresh">Начать с нуля</button>
-  </div>
 
   <!-- HERO -->
   <div class="grid2">
@@ -187,7 +190,7 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
         <button class="btn primary" id="plusOne">+1 рилс</button>
       </div>
     </div>
-    <div class="card hero">
+    <div class="card hero" id="moneyCard">
       <div class="label" id="moneyLabel">Заработано на машину</div>
       <div class="big" id="moneyBig">0 ₽</div>
       <div class="bar"><i id="moneyBar"></i></div>
@@ -215,7 +218,7 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
     <div class="heat-legend">меньше <i style="background:var(--h0)"></i><i style="background:var(--h1)"></i><i style="background:var(--h2)"></i><i style="background:var(--h3)"></i><i style="background:var(--h4)"></i> больше</div>
   </div>
 
-  <h2>Вехи</h2>
+  <h2>Этапы</h2>
   <div class="miles" id="miles"></div>
 
   <!-- FOLLOWERS -->
@@ -305,6 +308,11 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
       </div>
     </form>
   </details>
+
+  <div class="banner" style="margin:32px 0 0" id="demoBanner" hidden>
+    <span>Сейчас показаны демо-данные, чтобы было видно, как всё выглядит.</span>
+    <button class="btn primary" id="startFresh">Начать с нуля</button>
+  </div>
 
   <footer>Данные хранятся в этом браузере. Чтобы сохранить их на GitHub, нажми «Скачать data.json» и положи файл рядом с index.html.</footer>
 </div>
@@ -600,7 +608,7 @@ function render(){
 
   heatmap(st);
 
-  // milestones
+  // этапы
   const ms=[10,50,100,250,500,750,1000,1250,1500].filter(v=>v<S.goal).concat(S.goal).slice(-9);
   const reached={};cum=0;
   Object.keys(state.reels).sort().forEach(k=>{const b=cum;cum+=state.reels[k];ms.forEach(v=>{if(b<v&&cum>=v)reached[v]=k})});
@@ -677,6 +685,9 @@ $('#startFresh').onclick=()=>{if(!confirm('Удалить демо-данные 
 $('#resetBtn').onclick=()=>{if(!confirm('Стереть все данные в этом браузере? Сначала лучше скачай data.json.'))return;state=blank();['#fReels','#fFol','#fInc'].forEach(s=>$(s).reset());commit()};
 $('#exportBtn').onclick=()=>{const b=new Blob([JSON.stringify({...state,demo:false},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='data.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
 $('#importInp').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!d.settings||!d.reels)throw 0;state={demo:false,followers:[],income:[],...d};['#fReels','#fFol','#fInc'].forEach(s=>$(s).reset());commit()}catch(err){alert('Не получилось прочитать файл')}e.target.value=''};
+
+/* фото машины: положи car.jpg (или .webp/.png) рядом с index.html */
+(function carPhoto(list){if(!list.length)return;const img=new Image();img.onload=()=>{const c=$('#moneyCard');c.classList.add('car');c.style.backgroundImage=`url(${list[0]})`};img.onerror=()=>carPhoto(list.slice(1));img.src=list[0]})(['car.jpg','car.webp','car.png','car.jpeg']);
 
 /* theme */
 const THEMES=['auto','light','dark'],ICON={auto:'◐',light:'☀',dark:'☾'};
