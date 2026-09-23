@@ -716,7 +716,7 @@ photo('#reelsCard',['reels.jpg','reels.webp','reels.png'],{'--pos':'30% 20%','--
   const order=QUOTES.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
   const dayN=Math.floor(Date.UTC(new Date().getFullYear(),new Date().getMonth(),new Date().getDate())/MS);
   let cur=order[dayN%order.length];
-  const show=(i,daily)=>{const [t,a,src]=QUOTES[i];$('#qText').textContent=t;$('#qAuthor').innerHTML=esc(a)+(src?` <span>· ${esc(src)}</span>`:'');$('#qLabel').textContent=daily?'Цитата дня':'Цитата'};
+  const show=(i,daily)=>{const [t,a,src]=QUOTES[i];$('#qText').textContent=t.replace(/\.$/,'');$('#qAuthor').innerHTML=esc(a)+(src?` <span>· ${esc(src)}</span>`:'');$('#qLabel').textContent=daily?'Цитата дня':'Цитата'};
   show(cur,true);$('#quoteCard').hidden=false;
   $('#qNext').onclick=()=>{let n;do n=Math.floor(Math.random()*QUOTES.length);while(n===cur&&QUOTES.length>1);cur=n;show(cur,false)};
 })();
