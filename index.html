@@ -167,6 +167,7 @@ h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
 .leg-cells{display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
 .leg-cells i{aspect-ratio:1;border-radius:3px;background:var(--h0);position:relative;display:block}
 .leg-cells i.f{background:var(--accent)}
+.leg-cells i.f.alt{background:color-mix(in srgb,var(--accent) 62%,var(--surface))}
 .leg-cells i.m:not(.f){box-shadow:inset 0 0 0 1.5px var(--ink-3)}
 .leg-cells i.m.f::after{content:"";position:absolute;inset:30%;border-radius:50%;background:var(--surface)}
 .leg-cells i.cur{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--accent);z-index:1;animation:legPulse 2.2s ease-in-out infinite}
@@ -254,6 +255,14 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
 
   <!-- PLAN -->
   <h2>Темп и план</h2>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h3>Рилсы по дням</h3>
+      <div class="seg" id="daySeg"><button data-n="14">14 дн</button><button data-n="30">30 дн</button><button data-n="90">90 дн</button></div>
+    </div>
+    <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>выложено</span><span><i class="sw dash"></i>нужный темп</span></div>
+    <div class="chart" id="dayChart"></div>
+    <div class="fol-foot"><span class="note" id="dayNote"></span></div>
+  </div>
   <div class="card">
     <div class="card-h"><h3>Рилсы: факт, план и прогноз</h3><span class="note" id="burnNote"></span></div>
     <div class="legend">
@@ -280,7 +289,7 @@ footer{margin-top:56px;color:var(--ink-3);font-size:12px;text-align:center}
     </summary>
     <div class="leg-grid" id="legGrid"></div>
     <div class="leg-legend">
-      <span><i style="background:var(--accent)"></i>выложен</span>
+      <span><i style="background:var(--accent)"></i><i style="background:color-mix(in srgb,var(--accent) 62%,var(--surface));margin-left:-3px"></i>выложен (соседние дни — разным оттенком)</span>
       <span><i style="box-shadow:0 0 0 1.5px var(--surface),0 0 0 3px var(--accent);background:var(--accent)"></i>последний</span>
       <span><i style="background:transparent;outline:1.5px dashed var(--accent);outline-offset:-1.5px"></i>следующий</span>
       <span><i style="box-shadow:inset 0 0 0 1.5px var(--ink-3)"></i>этап</span>
@@ -545,24 +554,18 @@ function barDown(x,y,w,h,r){r=Math.min(r,w/2,h);return`M${x},${y}H${x+w}V${y+h-r
 function gainChart(host,byD,days,keys){
   const N=days.length,W=Math.max(260,host.clientWidth),H=260,m={l:48,r:8,t:12,b:26},iw=W-m.l-m.r,ih=H-m.t-m.b;
   let hi=0,lo=0;
-  days.forEach(d=>{const r=byD[d];if(!r)return;let p=0,n=0;keys.forEach(k=>r[k]>0?p+=r[k]:n+=r[k]);hi=Math.max(hi,p);lo=Math.min(lo,n)});
+  days.forEach(d=>{const r=byD[d];if(!r)return;keys.forEach(k=>{hi=Math.max(hi,r[k]);lo=Math.min(lo,r[k])})});
   const {step}=niceScale(Math.max(hi-lo,1));
   const max=Math.max(step,Math.ceil(hi/step)*step),min=Math.floor(lo/step)*step;
-  const Y=v=>m.t+(max-v)/(max-min)*ih,bw=iw/N,w=Math.max(2,Math.min(26,bw*.72)),rr=Math.min(4,w/2);
+  const Y=v=>m.t+(max-v)/(max-min)*ih,bw=iw/N,gw=Math.min(bw*.8,60),sw=Math.max(1.5,(gw-(keys.length-1)*1.5)/keys.length),rr=Math.min(3,sw/2);
   let bg='',g='',hit='';
-  for(let v=min;v<=max+1e-9;v+=step)g+=`<line class="grid-l" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" ${v===0&&min<0?'style="stroke:var(--ink-3)"':''}/><text class="ax" x="${m.l-8}" y="${Y(v)+4}" text-anchor="end">${v<0?'−'+compact(-v):compact(v)}</text>`;
+  for(let v=min;v<=max+1e-9;v+=step)g+=`<line class="grid-l" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" ${v===0?'style="stroke:var(--ink-3)"':''}/><text class="ax" x="${m.l-8}" y="${Y(v)+4}" text-anchor="end">${v<0?'−'+compact(-v):compact(v)}</text>`;
   const every=Math.ceil(N/Math.max(2,Math.floor(iw/58)));
   days.forEach((d,i)=>{
-    const x0=m.l+bw*i,x=x0+(bw-w)/2,r=byD[d];
+    const x0=m.l+bw*i,gx=x0+(bw-gw)/2,r=byD[d];
     bg+=`<rect class="colbg" data-i="${i}" x="${x0}" y="${m.t}" width="${bw}" height="${ih}" style="fill:transparent"/>`;
-    if(r){
-      const pos=keys.filter(k=>r[k]>0),neg=keys.filter(k=>r[k]<0);let acc=0;
-      pos.forEach((k,j)=>{const y0=Y(acc),y1=Y(acc+r[k]);acc+=r[k];const h=Math.max(1,y0-y1-(j?2:0));
-        g+=j===pos.length-1?`<path d="${barPath(x,y1,w,h,rr)}" style="fill:${PCOL[k]}"/>`:`<rect x="${x}" y="${y1}" width="${w}" height="${h}" style="fill:${PCOL[k]}"/>`});
-      acc=0;
-      neg.forEach((k,j)=>{const y0=Y(acc),y1=Y(acc+r[k]);acc+=r[k];const yt=y0+(j?2:0),h=Math.max(1,y1-yt);
-        g+=j===neg.length-1?`<path d="${barDown(x,yt,w,h,rr)}" style="fill:${PCOL[k]}"/>`:`<rect x="${x}" y="${yt}" width="${w}" height="${h}" style="fill:${PCOL[k]}"/>`});
-    }
+    if(r)keys.forEach((k,j)=>{const v=r[k];if(!v)return;const x=gx+j*(sw+1.5),y0=Y(0),y1=Y(v);
+      g+=v>0?`<path d="${barPath(x,y1,sw,Math.max(1,y0-y1),rr)}" style="fill:${PCOL[k]}"/>`:`<path d="${barDown(x,y0,sw,Math.max(1,y1-y0),rr)}" style="fill:${PCOL[k]}"/>`});
     if((N-1-i)%every===0)g+=`<text class="ax" x="${x0+bw/2}" y="${H-6}" text-anchor="middle">${dShort(parse(d))}</text>`;
     hit+=`<rect class="colhit" data-i="${i}" x="${x0}" y="0" width="${bw}" height="${H}" fill="transparent"/>`;
   });
@@ -632,7 +635,7 @@ const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII
 let legAnimated=false,legDates=[];
 function legions(st,ms){
   const goal=st.S.goal,total=Math.min(st.total,goal),n=Math.ceil(goal/100);
-  legDates=[];Object.keys(state.reels).sort().forEach(k=>{for(let j=0;j<state.reels[k];j++)legDates.push(k)});
+  legDates=[];const legAlt=[];Object.keys(state.reels).sort().forEach((k,di)=>{for(let j=0;j<state.reels[k];j++){legDates.push(k);legAlt.push(di%2)}});
   const curLeg=Math.min(n-1,Math.floor(total/100));
   $('#legNote').textContent=total>=goal?'Все легионы собраны. Император.':`${fmt(total)} из ${fmt(goal)} · легион ${ROMAN[curLeg]||curLeg+1}, до его конца ${fmt(Math.min(goal,(curLeg+1)*100)-total)}`;
   $('#legMini').innerHTML=Array.from({length:n},(_,b)=>{const size=Math.min(100,goal-b*100),p=Math.max(0,Math.min(1,(total-b*100)/size));return`<i><b style="width:${p*100}%"></b></i>`}).join('');
@@ -643,7 +646,7 @@ function legions(st,ms){
     const from=b*100+1,to=Math.min(goal,(b+1)*100),inB=Math.max(0,Math.min(to,total)-b*100),size=to-from+1;
     h+=`<div class="leg${inB===size?' done':''}${b===curLeg&&total<goal?' now':''}"><div class="leg-h"><b>${ROMAN[b]||b+1}</b><span>${inB===size?'✓ собран':inB+' / '+size}</span></div><div class="leg-cells">`;
     for(let i=from;i<=to;i++){
-      const f=i<=total,c=(f?'f':'')+(i===total?' cur':'')+(i===total+1?' nx':'')+(msSet.has(i)?' m':'');
+      const f=i<=total,c=(f?'f':'')+(f&&legAlt[i-1]?' alt':'')+(i===total?' cur':'')+(i===total+1?' nx':'')+(msSet.has(i)?' m':'');
       h+=`<i data-n="${i}" class="${c.trim()}"${f&&animate?` style="--d:${Math.min(i*1.5,900)}ms"`:''}></i>`;
     }
     h+='</div></div>';
@@ -657,6 +660,33 @@ $('#legGrid').addEventListener('pointermove',e=>{
   showTip(`<b>Рилс №${fmt(n)}</b>${el.classList.contains('m')?' · этап':''}<div style="opacity:.7">${d?dLong(parse(d)):left===1?'следующий — давай!':'ещё '+fmt(left)}</div>`,e.clientX,e.clientY);
 });
 $('#legGrid').addEventListener('pointerleave',hideTip);
+
+/* ---------- рилсы по дням ---------- */
+let dayRange=14;
+function reelsChart(host,days,need){
+  const N=days.length,W=Math.max(260,host.clientWidth),H=220,m={l:36,r:8,t:18,b:26},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const vals=days.map(d=>state.reels[d]||0),top=Math.max(...vals,Math.ceil(need),1);
+  const step=top<=5?1:top<=10?2:Math.ceil(top/5),max=Math.ceil(top/step)*step;
+  const Y=v=>m.t+ih-v/max*ih,bw=iw/N,w=Math.max(2,Math.min(30,bw*.62)),rr=Math.min(4,w/2);
+  let g='',hit='';
+  for(let v=0;v<=max;v+=step)g+=`<line class="grid-l" x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}"/><text class="ax" x="${m.l-8}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
+  const every=Math.ceil(N/Math.max(2,Math.floor(iw/58))),labels=bw>=18;
+  vals.forEach((v,i)=>{
+    const x0=m.l+bw*i,x=x0+(bw-w)/2;
+    g+=`<rect class="colbg" x="${x0}" y="${m.t}" width="${bw}" height="${ih}" style="fill:transparent"/>`;
+    if(v){g+=`<path d="${barPath(x,Y(v),w,Y(0)-Y(v),rr)}" style="fill:var(--accent)"/>`;
+      if(labels)g+=`<text class="ax" x="${x0+bw/2}" y="${Y(v)-5}" text-anchor="middle" style="fill:var(--ink);font-weight:700">${v}</text>`}
+    if((N-1-i)%every===0)g+=`<text class="ax" x="${x0+bw/2}" y="${H-6}" text-anchor="middle">${i===N-1?'сегодня':dShort(parse(days[i]))}</text>`;
+    hit+=`<rect class="colhit" data-i="${i}" x="${x0}" y="0" width="${bw}" height="${H}" fill="transparent"/>`;
+  });
+  const needLine=need>0&&need<=max?`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(need)}" y2="${Y(need)}" style="stroke:var(--ink-3);stroke-width:1.5" stroke-dasharray="5 5"/>`:'';
+  host.innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img">${needLine}${g}${hit}</svg>`;
+  const bgs=host.querySelectorAll('.colbg');
+  host.querySelectorAll('.colhit').forEach(el=>{const i=+el.dataset.i;
+    el.addEventListener('pointermove',e=>{bgs.forEach(b=>b.style.fill='transparent');bgs[i].style.fill='var(--surface-2)';
+      const v=vals[i];showTip(`<div style="opacity:.7">${dLong(parse(days[i]))}</div><b>${v} ${plural(v,'рилс','рилса','рилсов')}</b><div style="opacity:.7">${v>=need?'норма выполнена ✓':'до нормы не хватило '+fmt1(need-v)}</div>`,e.clientX,e.clientY)});
+    el.addEventListener('pointerleave',()=>{bgs[i].style.fill='transparent';hideTip()})});
+}
 
 /* ---------- render ---------- */
 function render(){
@@ -692,6 +722,13 @@ function render(){
     ['Подписчики',compact(fNow),st.fol.length>1?`<span class="${fd>=0?'pos':'neg'}">${fd>=0?'+':'−'}${compact(Math.abs(fd))}</span> за 30 дней`:'внеси замеры'],
   ];
   $('#kpis').innerHTML=k.map(([l,v,n])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="n">${n}</div></div>`).join('');
+
+  // рилсы по дням
+  {const days=Array.from({length:dayRange},(_,i)=>iso(addDays(st.t,i-dayRange+1)));
+   reelsChart($('#dayChart'),days,st.need);
+   const vals=days.map(d=>state.reels[d]||0),sum=vals.reduce((a,b)=>a+b,0),bi=vals.indexOf(Math.max(...vals)),hit=vals.filter(v=>v>=st.need&&v>0).length;
+   $('#dayNote').textContent=`за ${dayRange} дней: ${sum} ${plural(sum,'рилс','рилса','рилсов')} · в среднем ${fmt1(sum/dayRange)} в день · норму ${fmt1(st.need)} выполнил в ${hit} из ${dayRange} дней`+(sum?` · рекорд ${vals[bi]} (${dShort(parse(days[bi]))})`:'');
+   document.querySelectorAll('#daySeg button').forEach(b=>b.classList.toggle('on',+b.dataset.n===dayRange));}
 
   // burn-up
   const actual=[];let cum=0;
@@ -775,6 +812,7 @@ $('#fReels').date.onchange=e=>{$('#fReels').count.value=state.reels[e.target.val
 $('#fFol').onsubmit=e=>{e.preventDefault();const f=e.target,row={date:f.date.value};PLAT.forEach(([k])=>row[k]=f[k].value===''?0:+f[k].value);state.followers=state.followers.filter(x=>x.date!==row.date).concat(row);commit()};
 $('#fInc').onsubmit=e=>{e.preventDefault();const f=e.target;state.income.push({id:Date.now().toString(36),date:f.date.value,amount:+f.amount.value,source:f.source.value,note:f.note.value.trim()});f.amount.value='';f.note.value='';commit()};
 $('#hInc').onclick=e=>{const id=e.target.dataset.inc;if(id){state.income=state.income.filter(i=>i.id!==id);commit()}};
+$('#daySeg').onclick=e=>{const n=+e.target.dataset.n;if(n){dayRange=n;render()}};
 $('#rangeSeg').onclick=e=>{const n=+e.target.dataset.n;if(n){folRange=n;render()}};
 $('#folLegend').onclick=e=>{const b=e.target.closest('.lg');if(!b)return;const k=b.dataset.k;if(folHidden.has(k))folHidden.delete(k);else if(folHidden.size<3)folHidden.add(k);render()};
 $('#folTableBtn').onclick=()=>{folTable=!folTable;render()};
